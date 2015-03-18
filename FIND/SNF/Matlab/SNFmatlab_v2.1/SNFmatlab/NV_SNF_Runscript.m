@@ -5,8 +5,26 @@ close all
 
 %%Load the data
 %load BS_rawData_thresh0.1.mat;
-load BS_rawData_thresh0.1_pBetween0.2.mat;
-%%Prepare data in adjacency matrix from BS R code (manually imported)
+%load BS_rawData_thresh0.1_pBetween0.2.mat;
+%
+%%%First, set all the parameters.
+K = 20;%number of neighbors, usually (10~30)
+alpha = 0.5; %hyperparameter, usually (0.3~0.8)
+T = 20; %Number of Iterations, usually (10~20)
+C = 200;%%%number of clusters
+dataSaveName = '../../Data/nG20000-nSys-200-pWith-0.4.mat';
+
+rawData = csvread('../../../../Data/matlabImportData.csv');
+geneA = rawData(:,1);
+geneB = rawData(:,2);
+iRef = rawData(:,3);
+GEO = rawData(:,4);
+GO = rawData(:,5);
+pathW = rawData(:,6);
+
+groundTruth = csvread('../../../../Data/matlabImportTruth.csv');
+
+%Prepare data in adjacency matrix from BS R code (manually imported)
 dataCat = [iRef GEO GO pathW];
 for j=1:size(dataCat,2);
     for i=1:length(geneA)
@@ -15,12 +33,7 @@ for j=1:size(dataCat,2);
     end
 end
 
-
-%%%First, set all the parameters.
-K = 20;%number of neighbors, usually (10~30)
-alpha = 0.5; %hyperparameter, usually (0.3~0.8)
-T = 20; %Number of Iterations, usually (10~20)
-
+save(dataSaveName);
 %If the data are all continuous values, we recommend the users to perform standard normalization before using SNF, though it is optional depending on the data the users want to use. 
 
 %Data1 = Standard_Normalization(data1);
@@ -59,7 +72,7 @@ W = SNF({W1,W2,W3,W4}, K, T);
 
 %%%%With this unified graph W of size n x n, you can do either spectral clustering or Kernel NMF. If you need help with further clustering, please let us know. 
 %%for example, spectral clustering
-C = 33;%%%number of clusters
+
 
 for i=1:size(dataCat,2);
     ind_group{i} = SpectralClustering(W_ind{i},C);
