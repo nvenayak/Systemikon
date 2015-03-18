@@ -11,7 +11,7 @@ close all
 K = 20;%number of neighbors, usually (10~30)
 alpha = 0.5; %hyperparameter, usually (0.3~0.8)
 T = 20; %Number of Iterations, usually (10~20)
-C = 200;%%%number of clusters
+C = 32;%%%number of clusters
 dataSaveName = '../../Data/nG20000-nSys-200-pWith-0.4.mat';
 
 rawData = csvread('../../../../Data/matlabImportData.csv');
@@ -23,17 +23,19 @@ GO = rawData(:,5);
 pathW = rawData(:,6);
 
 groundTruth = csvread('../../../../Data/matlabImportTruth.csv');
-
+save(dataSaveName);
 %Prepare data in adjacency matrix from BS R code (manually imported)
+
+fprintf('Creating adjacency matrices\n');
 dataCat = [iRef GEO GO pathW];
 for j=1:size(dataCat,2);
     for i=1:length(geneA)
-        adj_mat{j}(geneA(i),geneB(i)) = dataCat(i,j);
-        adj_mat{j}(geneB(i),geneA(i)) = adj_mat{j}(geneA(i),geneB(i));
+        W_ind{j}(geneA(i),geneB(i)) = dataCat(i,j);
+        W_ind{j}(geneB(i),geneA(i)) = W_ind{j}(geneA(i),geneB(i));
     end
 end
+fprintf('Created all adjacency matrices\n');
 
-save(dataSaveName);
 %If the data are all continuous values, we recommend the users to perform standard normalization before using SNF, though it is optional depending on the data the users want to use. 
 
 %Data1 = Standard_Normalization(data1);
@@ -44,10 +46,10 @@ save(dataSaveName);
 % Dist1 = dist2(Data1,Data1);
 % Dist2 = dist2(Data2,Data2);
 
-W1 = adj_mat{1};
-W2 = adj_mat{2};
-W3 = adj_mat{3};
-W4 = adj_mat{4};
+% W1 = adj_mat{1};
+% W2 = adj_mat{2};
+% W3 = adj_mat{3};
+% W4 = adj_mat{4};
 
 %%%next, construct similarity graphs - we already have these, no need to
 %%%construct them
@@ -56,30 +58,40 @@ W4 = adj_mat{4};
 % W3 = affinityMatrix(Dist3, K, alpha);
 % W4 = affinityMatrix(Dist4, K, alpha);
 
-W_ind{1} = W1;
-W_ind{2} = W2;
-W_ind{3} = W3;
-W_ind{4} = W4;
+% W_ind{1} = W1;
+% W_ind{2} = W2;
+% W_ind{3} = W3;
+% W_ind{4} = W4;
+
+
+% for i=1:length(adj_mat)
+%     W_ind{i} = adj_mat{i};
+% end
 
 %%% These similarity graphs have complementary information about clusters.
 % displayClusters(W1,groundTruth);
 % displayClusters(W2,groundTruth);
 
-%next, we fuse all the graphs
-% then the overall matrix can be computed by similarity network fusion(SNF):
-W = SNF({W1,W2,W3,W4}, K, T);
 
 
 %%%%With this unified graph W of size n x n, you can do either spectral clustering or Kernel NMF. If you need help with further clustering, please let us know. 
 %%for example, spectral clustering
 
-
+fprintf('Beginning individual graph clustering\n');
 for i=1:size(dataCat,2);
     ind_group{i} = SpectralClustering(W_ind{i},C);
+    fprintf('Clustered graph: #%i\n',i);
 end
 
-group = SpectralClustering(W,C);%%%the final subtypes information
+fprintf('Beginning SNF\n');
+%next, we fuse all the graphs
+% then the overall matrix can be computed by similarity network fusion(SNF):
+W = SNF({W_ind{1},W_ind{2},W_ind{3},W_ind{4}}, K, T);
+fprintf('Completed SNF\n');
 
+fprintf('Beginning spectral clustering on SNF');
+group = SpectralClustering(W,C);%%%the final subtypes information
+fprintf('Completed spectral clustering\n');
 
 
 %%%%%%Calculate accuracy based on ground truth
@@ -148,7 +160,7 @@ SNFNMI = Cal_NMI(group, groundTruth)
 
 
 %%%you can also find the concordance between each individual network and the fused network
-ConcordanceMatrix = Concordance_Network_NMI({W,W1,W2,W3,W4},C)
+ConcordanceMatrix = Concordance_Network_NMI({W,W_ind{1},W_ind{2},W_ind{3},W_ind{4}},C)
 
 
 %%%Here we provide two ways to estimate the number of clusters. Note that,

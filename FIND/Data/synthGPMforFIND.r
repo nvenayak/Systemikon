@@ -16,8 +16,8 @@
 # Added output option to write numeric gene IDs and system IDs.
 # =====================
 
-nGenes <- 4000   # Number of genes
-nSystems <- 32*2  # Number of Systems
+nGenes <- 10000   # Number of genes
+nSystems <- 32  # Number of Systems
 
 trackNames <- c("")
 trackNames[1] <- "iRef"
