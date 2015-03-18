@@ -16,8 +16,8 @@
 # Added output option to write numeric gene IDs and system IDs.
 # =====================
 
-nGenes <- 20000   # Number of genes
-nSystems <- 200  # Number of Systems
+nGenes <- 4000   # Number of genes
+nSystems <- 32*2  # Number of Systems
 
 trackNames <- c("")
 trackNames[1] <- "iRef"
@@ -243,13 +243,14 @@ for (pair in 1:nrow(genePairs)) {
   }
   cat("\n")
 }
+sink()
 
 sink("C:/Users/Naveen/Documents/GitHub/Systemikon/FIND/Data/matlabImportTruth.csv",FALSE)
 for (gene in 1:length(geneSys)) {
   cat(geneSys[gene])
   cat("\n")
 }
-
+sink()
 
 # sink()
 # # Simple output with system IDs:
